@@ -1,27 +1,36 @@
-var builder = WebApplication.CreateBuilder(args);
+namespace HelloRender.Api;
 
-// Add services to the container.
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+public static class Program
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    public static void Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+        
+        builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
+
+        var app = builder.Build();
+        
+        var isRenderEnvironment = Environment.GetEnvironmentVariable("RENDER") == "true";
+
+        if (app.Environment.IsDevelopment() || isRenderEnvironment)
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+        
+        var disableHttpsRedirection = app.Environment.IsProduction() && isRenderEnvironment;
+
+        if (!disableHttpsRedirection)
+        {
+            app.UseHttpsRedirection();
+        }
+
+        app.UseAuthorization();
+
+        app.MapControllers();
+
+        app.Run();
+    }
 }
-
-// Disable HTTPS redirection in production when running on Render.com
-if (!app.Environment.IsProduction() || Environment.GetEnvironmentVariable("RENDER") != "true")
-{
-    app.UseHttpsRedirection();
-}
-
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
